@@ -1,0 +1,29 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{fullpage}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{float}
+\doublespacing
+\begin{document}
+\begin{flushleft}
+Jeffrey Brock\\
+{\today}\\
+\end{flushleft}
+\begin{center}
+\large\textbf{PA 3 - Design Document}
+\end{center}
+\begin{itemize}
+
+    \item My choice of language and library for this project will be ruby with the ruby standard library. This is because I used ruby for the first project and so I am familiar with ruby's implementation of sockets. Also, ruby has an easy to use API for openssl in its standard library, so I will not need to use any external library. Finally, ruby has easy to use SHA-1 hashing, to directly create base 64 hashes, and I can easily base 64 encode my encrypted messages.
+
+    \item Public key encryption will be accomplished with the openssl API. Creating a key will be as simple as using the ruby command: 'rsakey = OpenSSL::PKey::RSA.new(1024)', which gives a key object. The public and private key can be accessed: 'privatekey = rsakey.to\_pem' and 'publickey = rsakey.public\_key.to\_pem'. These give a properly formatted string, ready to be written to a file. This will be done to generate the C key that acts as a certificate authority, and Alice and Bob will read from the pem files given to them to get the public and private keys respectively. Alice and Bob will also generate a new RSA public key at runtime which will be kept in memory and used to encrypt and decrypt each message.
+    
+    \item Symmetric key encryption will also be done using the openssl API. A key can be created by simple doing the following: 'deskey = OpenSSL::Cipher::Cipher.new("des-ede3")'. Then, the key is initialized with either 'deskey.encrypt' or 'deskey.decrypt' depending on what will be done. A key can be then generated with 'key = deskey.random\_key', or if on the receiving end set the key with 'deskey.key = key'. The actual decryption/encryption is done with 'deskey.update(data) + deskey.final', the final is needed for padding reasons. Thus Alice will generate a key and use it to encrypt, and send it encrypted by Bob's public key. Bob will create a key using the key sent by alice, which can then decrypt the message.
+
+    \item Lastly using SHA1 will be accomplished with the Digest library of the ruby standard library. This is easiest to use, I will do the following: 'Digest::SHA1.base64digest(data)'. Both Alice and Bob will use this to get a digest of the message, Alice will use it on the original message and Bob will use it to compare with the hash sent by Alice. I will use the base64 method as show above, and I will also encode the encrypted messages with base64. This is just so that the messages are shorter than if they were hex, and to ensure everything sent over the socket is all encoded the same way to avoid encoding issues.
+
+    \item Both Alice and Bob will use simple TCP sockets to communicate. I will not need other tools than those described above, and I will use a very simple protocol for the communication. This will include a 'HELLO' message, five characters that will initiate the handshake. Then Alice will wait for Bob's public key, after which Bob will wait for Alice's encrypted message using the full stack described in the assignment specification. These messages will have no other characters than the encrypted messages themselves. The programs for Alice and Bob will expect a private/public key to be in the directory for use as a pretend certificate authority, and the Alice program will require the user to pass the destination host, port and message via the command line parameters. If time permits, I will also allow for more than one message to be sent by the Alice program.
+        
+\end{itemize}
+\end{document}
